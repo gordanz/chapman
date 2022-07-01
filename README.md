@@ -1,7 +1,7 @@
 # Chapman
 
 A Python library for creation, visualization and manipulation of Markov
-chains. An documentation page is at [gordanz.github.io/chapman](https://gordanz.github.io/chapman/)
+chains. A documentation page is at [gordanz.github.io/chapman](https://gordanz.github.io/chapman/)
 
 ## Installation
 
