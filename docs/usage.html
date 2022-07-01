@@ -1,0 +1,406 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Usage &#8212; chapman 0.0.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Reference" href="chapman.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<section id="basic-usage">
+<h2>Basic usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h2>
+<p>Don’t forget to import the package before you use it</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="go">import chapman as mk</span>
+</pre></div>
+</div>
+<p>The main player in all of this is a</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="go">m = mk.MarkovChain(title = &quot;My First Chain&quot;)</span>
+</pre></div>
+</div>
+<p>The title is optional (defaults to “Untitled”) but it is good practice to
+give your Markov chains distinctive names. Once we have instantiated the
+<code class="xref py py-class docutils literal notranslate"><span class="pre">MarkovChain</span></code> object <code class="xref py py-obj docutils literal notranslate"><span class="pre">m</span></code>, we can start adding some states to it.
+This is accomplished by using the method <code class="xref py py-meth docutils literal notranslate"><span class="pre">add_state()</span></code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><cite>Markov Chain</cite> is a class derived from <cite>nx.DiGraph</cite>, so it inherited its methods, such as <cite>add_node</cite> or <cite>add_edge</cite>. Do not use those. If you do no error will be reported, and it will be difficult to debug your code when it fails.</p>
+</div>
+<p>While not strictly necessary, it is a good idea to use strings - delimited by
+<cite>” “</cite>, or <cite>‘ ‘</cite> -  as state names:</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">&quot;Stop&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The chain now contains three states. To display the contents of the chain, we
+use the method <code class="xref py py-meth docutils literal notranslate"><span class="pre">info()</span></code>. It returns a string, so we need to print it:</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">info</span><span class="p">())</span>
+<span class="go">Basic info for: &quot;My First Chain&quot;</span>
+<span class="go">--------------------------------</span>
+
+<span class="go">     - states (3): [&#39;A&#39;, &#39;B&#39;, &#39;Stop&#39;]</span>
+
+<span class="go">     - transitions (0):</span>
+</pre></div>
+</div>
+<p>Next, we need to add the transition probabilities between states using the
+method <code class="xref py py-meth docutils literal notranslate"><span class="pre">add_transition()</span></code></p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="n">probability</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">probability</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">,</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">probability</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">,</span><span class="s2">&quot;Stop&quot;</span><span class="p">,</span> <span class="n">probability</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="s2">&quot;Stop&quot;</span><span class="p">,</span><span class="s2">&quot;Stop&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Our chain now contains some arrows between states, as well. It is not
+complete, yet, though. When we are done with all the states and
+transitions, we need to <code class="xref py py-meth docutils literal notranslate"><span class="pre">compute()</span></code> the chain to update its internals,
+determine the classes, transient and recurrent states, periods, etc. This
+will also create the chain’s transition matrix. If we don’t
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">compute()</span></code> first, an error will be reported when we try to call
+the method <code class="xref py py-meth docutils literal notranslate"><span class="pre">info_P()</span></code> which outputs the chain’s transition matrix:</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">info_P</span><span class="p">())</span>
+<span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">1</span>, in <span class="n">&lt;module&gt;</span>
+  File <span class="nb">&quot;/Users/gordanz/chapman/chapman/base.py&quot;</span>, line <span class="m">422</span>, in <span class="n">info_P</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">chapman</span><span class="o">.</span><span class="n">_representation</span><span class="o">.</span><span class="n">info_P</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+  File <span class="nb">&quot;/Users/gordanz/chapman/chapman/_representation.py&quot;</span>, line <span class="m">54</span>, in <span class="n">info_P</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">_P_matrix_computed</span><span class="p">,</span> <span class="s2">&quot;Compute the matrix P first.&quot;</span>
+<span class="gr">AssertionError</span>: <span class="n">Compute the matrix P first.</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">info_P</span><span class="p">())</span>
+<span class="go">P-matrix info for: &quot;My First Chain&quot;</span>
+<span class="go">-----------------------------------</span>
+<span class="go"> - transition matrix:</span>
+<span class="go">[[0.5 0.5 0. ]</span>
+<span class="go"> [0.5 0.  0.5]</span>
+<span class="go"> [0.  0.  1. ]]</span>
+
+<span class="go"> - order of states:{0: &#39;A&#39;, 1: &#39;B&#39;, 2: &#39;Stop&#39;}</span>
+</pre></div>
+</div>
+<p>When building a chain, it is important to make sure that the
+probabilities corresponding to all transitions from each state sum up to 1.
+This is checked by <code class="xref py py-meth docutils literal notranslate"><span class="pre">compute()</span></code> and an error is reported if a
+discrepancy is found.
+The
+error message will supply a clue about the missing transitions by computing
+the deviation from stochasticity:</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="n">mk</span><span class="o">.</span><span class="n">MarkovChain</span><span class="p">(</span><span class="s2">&quot;Missing transitions&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="s2">&quot;B&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">probability</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="n">probability</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+<span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">1</span>, in <span class="n">&lt;module&gt;</span>
+  File <span class="nb">&quot;/Users/gordanz/chapman/chapman/base.py&quot;</span>, line <span class="m">212</span>, in <span class="n">compute</span>
+    <span class="n">chapman</span><span class="o">.</span><span class="n">_classes</span><span class="o">.</span><span class="n">_compute_P_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+  File <span class="nb">&quot;/Users/gordanz/chapman/chapman/_classes.py&quot;</span>, line <span class="m">21</span>, in <span class="n">_compute_P_matrix</span>
+    <span class="s2">&quot;Deviation = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">deviation</span><span class="p">)</span>
+<span class="gr">AssertionError</span>: <span class="n">Transition matrix is not stochastic. Deviation = 1.0</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Don’t forget to include the transitions from absorbing states to themselves. This is often the reason your matrix is not stochasitc.</p>
+</div>
+</section>
+<section id="getting-information">
+<h2>Getting information<a class="headerlink" href="#getting-information" title="Permalink to this headline">¶</a></h2>
+<p>Once your chain is built, you can get information about it class structure,
+transience, recurrence and periodicity through the <code class="xref py py-meth docutils literal notranslate"><span class="pre">info()</span></code> method:</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">info_classes</span><span class="p">())</span>
+<span class="go">Class info for: &quot;My First Chain&quot;</span>
+<span class="go">--------------------------------</span>
+
+<span class="go"> - the chain is aperiodic (all states have period 1).</span>
+
+<span class="go"> - the chain is not irreducible. It has 2 classes.</span>
+
+<span class="go"> - classes (2): [[&#39;Stop&#39;], [&#39;B&#39;, &#39;A&#39;]]</span>
+
+<span class="go"> - transient classes (1, T = 2): [[&#39;B&#39;, &#39;A&#39;]]</span>
+
+<span class="go"> - recurrent classes (1, C = 1): [[&#39;Stop&#39;]]</span>
+</pre></div>
+</div>
+<p>The method <code class="xref py py-meth docutils literal notranslate"><span class="pre">info_P()</span></code> also outputs the transition matrix, together with
+the information about how states are mapped to its rows (columns).</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">info_P</span><span class="p">())</span>
+<span class="go">P-matrix info for: &quot;My first chain&quot;</span>
+<span class="go">-----------------------------------</span>
+<span class="go"> - transition matrix:</span>
+<span class="go">[[0.5 0.5 0. ]</span>
+<span class="go"> [0.5 0.  0.5]</span>
+<span class="go"> [0.  0.  1. ]]</span>
+
+<span class="go"> - order of states:{0: &#39;A&#39;, 1: &#39;B&#39;, 2: &#39;Stop&#39;}</span>
+</pre></div>
+</div>
+<p>The matrix P can be accessed directly through the member variable <code class="xref py py-data docutils literal notranslate"><span class="pre">P</span></code></p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">P</span>
+<span class="go">array([[0.5, 0.5, 0. ],</span>
+<span class="go">       [0.5, 0. , 0.5],</span>
+<span class="go">       [0. , 0. , 1. ]])</span>
+</pre></div>
+</div>
+<p>For chains with at least one transient state, the method <code class="xref py py-meth docutils literal notranslate"><span class="pre">info_QRF()</span></code>
+outputs the matrices Q and R from the canonical decomposition, as well as
+the fundamental matrix F. To be able to tell which row (column) of the
+matrix corresponds to which state, two separate mappings - one for transient (T-) and one for recurrent (C-) states are also given.</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">info_QRF</span><span class="p">())</span>
+<span class="go">QRF info for: &quot;My First Chain&quot;</span>
+<span class="go">------------------------------</span>
+
+<span class="go"> - matrix Q (T x T):</span>
+<span class="go">   [[0.5 0.5]</span>
+<span class="go">    [0.5 0. ]]</span>
+
+<span class="go"> - matrix R (T x C):</span>
+<span class="go">   [[0. ]</span>
+<span class="go">    [0.5]]</span>
+
+<span class="go"> - fundamental matrix F=(I-Q)^-1 (T x T):</span>
+<span class="go">   [[4. 2.]</span>
+<span class="go">    [2. 2.]]</span>
+
+<span class="go"> - order of T-states: {0: &#39;A&#39;, 1: &#39;B&#39;}</span>
+
+<span class="go"> - order of C-states: {0: &#39;Stop&#39;}</span>
+</pre></div>
+</div>
+<p>Just like P, the matrices Q, R and F are available directly using members
+<code class="xref py py-data docutils literal notranslate"><span class="pre">Q</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">R</span></code> and <code class="xref py py-data docutils literal notranslate"><span class="pre">F</span></code>. All of them will be returned as <cite>numpy</cite>
+arrays; this is important, among other things, because you can use the
+symbol <cite>&#64;</cite> to perform matrix multiplication</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="go"> &gt;&gt;&gt; m.F</span>
+<span class="go">array([[4., 2.],</span>
+<span class="go">       [2., 2.]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">U</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">F</span> <span class="o">@</span> <span class="n">m</span><span class="o">.</span><span class="n">R</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">U</span>
+<span class="go">array([[1.],</span>
+<span class="go">       [1.]])</span>
+</pre></div>
+</div>
+</section>
+<section id="dictionaries-and-vector-indices">
+<h2>Dictionaries and vector indices<a class="headerlink" href="#dictionaries-and-vector-indices" title="Permalink to this headline">¶</a></h2>
+<p>It takes three different dictionaries to translate between (all) states and
+the row (column) numbers in the transitions matrix P, transient states and
+the rows (columns) of Q and recurrent states and columns of R. These three
+dictionaries, as well as their inverses are available directly through
+members <code class="xref py py-data docutils literal notranslate"><span class="pre">S_to_I</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">I_to_S</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">S_to_T</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">T_to_S</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">S_to_C</span></code> and <code class="xref py py-data docutils literal notranslate"><span class="pre">C_to_S</span></code></p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">S_to_I</span>
+<span class="go">{&#39;A&#39;: 0, &#39;B&#39;: 1, &#39;Stop&#39;: 2}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">I_to_S</span>
+<span class="go">{0: &#39;A&#39;, 1: &#39;B&#39;, 2: &#39;Stop&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">S_to_T</span>
+<span class="go">{&#39;A&#39;: 0, &#39;B&#39;: 1}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">T_to_S</span>
+<span class="go">{0: &#39;A&#39;, 1: &#39;B&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">S_to_C</span>
+<span class="go">{&#39;Stop&#39;: 0}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">C_to_S</span>
+<span class="go">{0: &#39;Stop&#39;}</span>
+</pre></div>
+</div>
+<p>In general, we want to supply initial distributions or “reward” vectors as
+dictionaries, for at least two reasons. One, we do not know a-priori which
+positions correspond to which states, so we need to consult a dictionary
+anyway. Two, many times, most of the entries of the vector are zeros (or
+ones) and using a dictionary is a much more efficient way of supplying only
+the non-trivial values. Several methods are available to help with that.
+For example <code class="xref py py-meth docutils literal notranslate"><span class="pre">dict_to_T_row()</span></code> converts the dictionary from transient states
+to state names to a row-vector of size T.</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">dict_to_T_row</span><span class="p">({</span><span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">})</span>
+<span class="go">array([1, 2])</span>
+</pre></div>
+</div>
+<p>Missing values are automatically replaced by 0.</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">dict_to_T_row</span><span class="p">({</span><span class="s2">&quot;B&quot;</span><span class="p">:</span><span class="mi">3</span><span class="p">})</span>
+<span class="go">array([0, 3])</span>
+</pre></div>
+</div>
+<p>If you want some other value to be used for missing states, use the optional argument
+<code class="xref py py-data docutils literal notranslate"><span class="pre">value_for_omitted</span></code></p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">dict_to_T_row</span><span class="p">({</span><span class="s2">&quot;A&quot;</span><span class="p">:</span><span class="mi">3</span><span class="p">},</span> <span class="n">value_for_omitted</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+<span class="go">array([3, 1])</span>
+</pre></div>
+</div>
+<p>Other similar methods, such as
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">dict_to_P_row()</span></code> (used for initial distributions) or
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">dict_to_T_column()</span></code> (used for “reward” computations) are also
+available.</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">dict_to_T_column</span><span class="p">({</span><span class="s2">&quot;B&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">})</span>
+<span class="go">array([[0],</span>
+<span class="go">       [2]])</span>
+</pre></div>
+</div>
+<p>You can go the other way, too. Given a row or a column vector you get as a
+result of a computation, you can check what its values on various states
+are without eyeballing the exact row or column of an entry. In this case it
+does not matter if the input vector is a row or a column, but it does
+matter whether it represents transient or recurrent states. The three
+available methods are <code class="xref py py-meth docutils literal notranslate"><span class="pre">T_to_dict()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">C_to_dict()</span></code> and
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">P_to_dict()</span></code>.</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">dict_to_T_row</span><span class="p">({</span><span class="s2">&quot;A&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">T_to_dict</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+<span class="go">{&#39;A&#39;: 2, &#39;B&#39;: 0}</span>
+</pre></div>
+</div>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>The package <code class="xref py py-mod docutils literal notranslate"><span class="pre">chapman</span></code> contains a module called
+<a class="reference internal" href="chapman.html#module-chapman.examples" title="chapman.examples"><code class="xref py py-mod docutils literal notranslate"><span class="pre">chapman.examples</span></code></a> which contains a number of already implemented
+examples from your lecture notes. To use them, you have to import it first</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">chapman.examples</span> <span class="k">as</span> <span class="nn">mke</span>
+</pre></div>
+</div>
+<p>The collection of available examples will grow in time. To get the list of those available right now, use <code class="xref py py-func docutils literal notranslate"><span class="pre">list_examples()</span></code></p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mke</span><span class="o">.</span><span class="n">list_examples</span><span class="p">()</span>
+<span class="go">[&#39;attached_cycles&#39;, &#39;facility&#39;, &#39;gambler&#39;, &#39;mc20_1&#39;, &#39;mc21_1&#39;,</span>
+<span class="go">&#39;mc8_1&#39;, &#39;patterns_HHH&#39;, &#39;patterns_HTH&#39;, &#39;professor&#39;, &#39;tennis&#39;]</span>
+</pre></div>
+</div>
+<p>To learn more about each available example, use the builtin function
+<code class="xref py py-func docutils literal notranslate"><span class="pre">help()</span></code></p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">help</span><span class="p">(</span><span class="n">mke</span><span class="o">.</span><span class="n">tennis</span><span class="p">)</span>
+<span class="go">Help on function tennis in module chapman.examples:</span>
+
+<span class="go">tennis(p=0.4)</span>
+<span class="go">    The tennis chain.</span>
+
+<span class="go">    Args:</span>
+<span class="go">        p (float): the probability that S wins in a single rally</span>
+
+<span class="go">    Returns:</span>
+<span class="go">        a MarkovChain object</span>
+</pre></div>
+</div>
+<p>Finally, as in illustration, let us compute the expected number of deuces
+(40-40 scores) in s single game of tennis where the probability of winning
+a single rally for the two players are  0.55 and 0.45.</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">chapman</span> <span class="k">as</span> <span class="nn">mk</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">chapman.examples</span> <span class="k">as</span> <span class="nn">mke</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">mke</span><span class="o">.</span><span class="n">tennis</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.55</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a0_T</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">dict_to_T_row</span><span class="p">({</span><span class="s2">&quot;0-0&quot;</span> <span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">g</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">dict_to_T_column</span><span class="p">({</span><span class="s2">&quot;40-40&quot;</span> <span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="n">value_for_omitted</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a0_T</span> <span class="o">@</span> <span class="n">m</span><span class="o">.</span><span class="n">F</span> <span class="o">@</span> <span class="n">g</span>
+<span class="go">array([0.6])</span>
+</pre></div>
+</div>
+<p>Note that all examples are already “computed”, so you don’t need to call the
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">command()</span></code> method. Also, note how we use the functions
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">dict_to_T_row()</span></code> and <code class="xref py py-meth docutils literal notranslate"><span class="pre">dict_to_T_column()</span></code> to simplify the entry of
+long vectors whose values are mostly zeros. Finally, the result is
+technically a 1x1 matrix - that is why we see the <code class="xref py py-func docutils literal notranslate"><span class="pre">array()</span></code> and
+<code class="xref py py-obj docutils literal notranslate"><span class="pre">[]</span></code> around it.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">chapman</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-information">Getting information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dictionaries-and-vector-indices">Dictionaries and vector indices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="chapman.html">Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
+      <li>Next: <a href="chapman.html" title="next chapter">Reference</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Gordan Zitkovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

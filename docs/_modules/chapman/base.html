@@ -1,0 +1,589 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>chapman.base &#8212; chapman 0.0.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for chapman.base</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">chapman._classes</span>
+<span class="kn">import</span> <span class="nn">chapman._representation</span>
+
+<span class="n">DEFAULT_COLOR</span> <span class="o">=</span> <span class="s2">&quot;blue&quot;</span>
+
+<div class="viewcode-block" id="MarkovChain"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain">[docs]</a><span class="k">class</span> <span class="nc">MarkovChain</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Basic Markov-chain class.</span>
+<span class="sd">    </span>
+<span class="sd">    MarkovChain is derived from the DiGraph class from networkx. It uses</span>
+<span class="sd">    DiGraph to store states (nodes) and transitions (edges), as well as </span>
+<span class="sd">    some of their attributes. In addition to the data kept by DiGraph, it</span>
+<span class="sd">    computes and stores information about various chain-theoretic</span>
+<span class="sd">    properties. </span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        title (str): the title of the chain (optional, default &quot;Untitled&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># basic methods</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Untitled&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="c1"># general</span>
+        <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">title</span>
+
+        <span class="c1"># aliases for DiGraph members</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_nodes</span> <span class="c1"># a function </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_transitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_edges</span> <span class="c1"># a function!</span>
+
+
+        <span class="c1"># Markov-chain specific</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">classes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transient_states</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recurrent_states</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_transient_states</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_recurrent_states</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">transient_state_indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recurrent_state_indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transient_class_indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recurrent_class_indices</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_classes</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recurrent_classes</span> <span class="o">=</span> <span class="p">[]</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">transient_classes</span> <span class="o">=</span> <span class="p">[]</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_transient_classes</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_recurrent_classes</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_irreducible</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">no_transient</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_aperiodic</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="sd">&quot;&quot;&quot;Contains the transition matrix P of the chain&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Q</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="sd">&quot;&quot;&quot;Contains the TxT matrix Q&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="sd">&quot;&quot;&quot;Contains the TxC matrix Q&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="sd">&quot;&quot;&quot;Contains the fundamental matrix F = (I-Q)^{-1}.&quot;&quot;&quot;</span>
+
+        <span class="c1"># index-to-state dictionaries</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">I_to_S</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="sd">&quot;&quot;&quot;A dictionary that translates indices in P to state names&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">S_to_I</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="sd">&quot;&quot;&quot;A dictionary that translates state names to indices in P&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T_to_S</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="sd">&quot;&quot;&quot;A dictionary that translates indices in T to state names&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C_to_S</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="sd">&quot;&quot;&quot;A dictionary that translates indices in C to state names&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">S_to_T</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="sd">&quot;&quot;&quot;A dictionary that translates transient state names to indices in T&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">S_to_C</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="sd">&quot;&quot;&quot;A dictionary that translates recurrent state names to indices in C&quot;&quot;&quot;</span>
+
+        <span class="c1"># internal flags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_classes_computed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_P_matrix_computed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_QRF_matrix_computed</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># esthetics</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span> <span class="o">=</span> <span class="p">[</span><span class="mi">150</span><span class="p">,</span> <span class="mi">120</span><span class="p">]</span>
+
+<div class="viewcode-block" id="MarkovChain.add_state"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.add_state">[docs]</a>    <span class="k">def</span> <span class="nf">add_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">DEFAULT_COLOR</span><span class="p">,</span>
+                  <span class="n">position</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">process</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds a state to a Markov chain. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state (str): a string representing a state. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># default/random label and position</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">label</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">position</span><span class="p">:</span>
+            <span class="n">position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> 
+                <span class="n">position</span><span class="o">=</span><span class="n">position</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="n">color</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_classes_processed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_matrix_computed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_QRF_matrix_computed</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="MarkovChain.add_transition"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.add_transition">[docs]</a>    <span class="k">def</span> <span class="nf">add_transition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state1</span><span class="p">,</span> <span class="n">state2</span><span class="p">,</span> <span class="n">probability</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                       <span class="n">curve</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds a transition to a Markov Chain. </span>
+
+<span class="sd">        A transition with probability given by the argument probability ias</span>
+<span class="sd">        added to the chain. If no probability is given, it will default to</span>
+<span class="sd">        1. </span>
+
+<span class="sd">        args:</span>
+<span class="sd">            state1 (str): the initial state </span>
+<span class="sd">            state2 (str): the terminal state </span>
+<span class="sd">            probability (float): the probability of the transition (defaults to 1).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">probability</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> \
+            <span class="s2">&quot;A transition must have a positive probability.&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">label</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">probability</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">state1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="n">state1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">state2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="n">state2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">state1</span><span class="p">,</span> <span class="n">state2</span><span class="p">,</span>
+                      <span class="n">curve</span><span class="o">=</span><span class="n">curve</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">probability</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                      <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_classes_processed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_matrix_computed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_QRF_matrix_computed</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+   
+<div class="viewcode-block" id="MarkovChain.is_transient"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.is_transient">[docs]</a>    <span class="k">def</span> <span class="nf">is_transient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Checks whether the state is transient. The chain must be</span>
+<span class="sd">        &quot;computed&quot; first.</span>
+
+<span class="sd">        Args: </span>
+<span class="sd">            state (str): </span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: The return value. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+            
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes_computed</span><span class="p">:</span>
+            <span class="n">_compute_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;T&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MarkovChain.is_recurrent"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.is_recurrent">[docs]</a>    <span class="k">def</span> <span class="nf">is_recurrent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Checks whether the state is recurrent. The chain must be</span>
+<span class="sd">        &quot;computed&quot; first.</span>
+
+<span class="sd">        Args: </span>
+<span class="sd">            state (str): </span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: The return value. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes_computed</span><span class="p">:</span>
+            <span class="n">_compute_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;R&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MarkovChain.list_of_states"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.list_of_states">[docs]</a>    <span class="k">def</span> <span class="nf">list_of_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the list of all states in the chain.&quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">())</span></div>
+    
+<div class="viewcode-block" id="MarkovChain.list_of_transitions"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.list_of_transitions">[docs]</a>    <span class="k">def</span> <span class="nf">list_of_transitions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the list of all transitions (pairs or states) the chain.&quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="MarkovChain.period"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.period">[docs]</a>    <span class="k">def</span> <span class="nf">period</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the period of the state. The chain must be &quot;computed&quot; first.</span>
+
+<span class="sd">        Args: </span>
+<span class="sd">            state (str): </span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: The period of &quot;state&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes_computed</span><span class="p">:</span>
+            <span class="n">_compute_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="s2">&quot;period&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MarkovChain.class_number"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.class_number">[docs]</a>    <span class="k">def</span> <span class="nf">class_number</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the index of the class of the state in the </span>
+<span class="sd">        list m.classes. The chain must be &quot;computed&quot; first. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state (str):</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: the index of the class containing state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classes_computed</span><span class="p">:</span>
+            <span class="n">_compute_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="s2">&quot;class&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MarkovChain.compute"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Performs various computations on a MarkovChain class. It</span>
+<span class="sd">        computes periods of all states, classifies them, finds, transient</span>
+<span class="sd">        and recurrent states, and produces the matrices P, Q, R and F (if</span>
+<span class="sd">        they exist).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">chapman</span><span class="o">.</span><span class="n">_classes</span><span class="o">.</span><span class="n">_compute_P_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">chapman</span><span class="o">.</span><span class="n">_classes</span><span class="o">.</span><span class="n">_compute_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_transient</span><span class="p">:</span>
+            <span class="n">chapman</span><span class="o">.</span><span class="n">_classes</span><span class="o">.</span><span class="n">_compute_QRF_matrices</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_dump_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">state_records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">state_records</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">record</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">out</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_dump_transitions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">transition_records</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">transition_records</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot; -&gt; &quot;</span><span class="o">+</span><span class="n">record</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">record</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">out</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">out</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+    <span class="c1"># re-setting attributes</span>
+<div class="viewcode-block" id="MarkovChain.set_probability"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.set_probability">[docs]</a>    <span class="k">def</span> <span class="nf">set_probability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state1</span><span class="p">,</span> <span class="n">state2</span><span class="p">,</span> <span class="n">probability</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the probability of an already existing transition. Should not</span>
+<span class="sd">        be used unless you want to modify an existing transition. If</span>
+<span class="sd">        probability=0, this removes the transition. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state1 (str): the initial state</span>
+<span class="sd">            state2 (str): the terminal state</span>
+<span class="sd">            probability (float): the new probability of the transition.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">probability</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remove_edge</span><span class="p">(</span><span class="n">state1</span><span class="p">,</span> <span class="n">state2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">state1</span><span class="p">][</span><span class="n">state2</span><span class="p">][</span><span class="s2">&quot;probability&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">probability</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">state1</span><span class="p">][</span><span class="n">state2</span><span class="p">][</span><span class="s2">&quot;weight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">probability</span></div>
+
+<div class="viewcode-block" id="MarkovChain.set_name"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.set_name">[docs]</a>    <span class="k">def</span> <span class="nf">set_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the name of an already existing state. Should not</span>
+<span class="sd">        be used unless you want to modify an existing chain.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state1 (str): the initial state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nx</span><span class="o">.</span><span class="n">relabel_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">{</span><span class="n">state</span><span class="p">:</span> <span class="n">name</span><span class="p">},</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">set_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="s2">&quot;label&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
+
+    <span class="c1"># setting aesthetic attributes</span>
+    <span class="k">def</span> <span class="nf">set_loop_direction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="nb">dir</span><span class="p">):</span>
+        <span class="c1">#&quot;&quot;&quot;sets the loop direction for a state&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="s2">&quot;loop&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dir</span>
+
+    <span class="k">def</span> <span class="nf">set_color</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">color</span><span class="p">):</span>
+        <span class="c1">#&quot;&quot;&quot;sets the color for a state &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">color</span>
+    
+    <span class="c1"># def set_position(self, state, pos):</span>
+        <span class="c1"># #&quot;&quot;&quot;sets the position if a state &quot;&quot;&quot;</span>
+        <span class="c1"># self.nodes[state][&quot;position&quot;] = color</span>
+    
+    <span class="k">def</span> <span class="nf">set_canvas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l0</span><span class="p">,</span> <span class="n">l1</span><span class="p">):</span>
+        <span class="c1">#&quot;&quot;&quot;sets the canvas dimensions &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span> <span class="o">=</span> <span class="p">[</span><span class="n">l0</span><span class="p">,</span><span class="n">l1</span><span class="p">]</span>
+
+<div class="viewcode-block" id="MarkovChain.set_curve"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.set_curve">[docs]</a>    <span class="k">def</span> <span class="nf">set_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state1</span><span class="p">,</span> <span class="n">state2</span><span class="p">,</span> <span class="n">curve</span><span class="p">):</span>
+        <span class="c1">#&quot;&quot;&quot;sets the curvature value for a transition&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">[</span><span class="n">state1</span><span class="p">,</span> <span class="n">state2</span><span class="p">][</span><span class="s2">&quot;curve&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">curve</span></div>
+  
+    <span class="k">def</span> <span class="nf">set_layout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layout</span><span class="p">):</span>
+        <span class="c1"># &quot;&quot;&quot;Sets layout data from a dictionary</span>
+
+        <span class="c1"># args:</span>
+            <span class="c1"># layout (dict): a dictionary from states to arrays </span>
+                <span class="c1"># [x,y] of floats (coordinates)</span>
+
+        <span class="c1"># &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">layout</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">[</span><span class="n">state</span><span class="p">][</span><span class="s2">&quot;position&quot;</span><span class="p">]</span><span class="o">=</span> <span class="n">layout</span><span class="p">[</span><span class="n">state</span><span class="p">]</span>
+
+    <span class="c1"># dictionaries to vectors</span>
+<div class="viewcode-block" id="MarkovChain.dict_to_T_column"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.dict_to_T_column">[docs]</a>    <span class="k">def</span> <span class="nf">dict_to_T_column</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dct</span><span class="p">,</span> <span class="n">value_for_omitted</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a column vector of size T, whose values are taken from</span>
+<span class="sd">        the dictionary dict from transient states to numbers. The value</span>
+<span class="sd">        value_for_omitted (which defaults to 0) will be used for </span>
+<span class="sd">        states not included in dct.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dct (dict): a dictionary from strings to numbers</span>
+<span class="sd">            value_for_omitted (int or float): used for missing states</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span> <span class="p">[</span> <span class="n">dct</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T_to_S</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">value_for_omitted</span><span class="p">)</span> <span class="p">]</span> 
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_transient_states</span><span class="p">)</span> <span class="p">]</span>
+            <span class="p">))</span></div>
+    
+<div class="viewcode-block" id="MarkovChain.dict_to_T_row"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.dict_to_T_row">[docs]</a>    <span class="k">def</span> <span class="nf">dict_to_T_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dct</span><span class="p">,</span> <span class="n">value_for_omitted</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a row vector of size T, whose values are taken from</span>
+<span class="sd">        the dictionary dict from transient states to numbers. The value</span>
+<span class="sd">        value_for_omitted (which defaults to 0) will be used for </span>
+<span class="sd">        states not included in dct. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dct (dict): a dictionary from strings to numbers</span>
+<span class="sd">            value_for_omitted (int or float): used for missing states</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span> <span class="n">dct</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T_to_S</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">value_for_omitted</span><span class="p">)</span> 
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_transient_states</span><span class="p">)</span> <span class="p">]</span>
+            <span class="p">))</span></div>
+    
+
+<div class="viewcode-block" id="MarkovChain.dict_to_P_row"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.dict_to_P_row">[docs]</a>    <span class="k">def</span> <span class="nf">dict_to_P_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dct</span><span class="p">,</span> <span class="n">value_for_omitted</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a row vector of size P (total number of states), whose</span>
+<span class="sd">        values are taken from the dictionary dict from states to</span>
+<span class="sd">        numbers. The value value_for_omitted (which defaults to 0) will be</span>
+<span class="sd">        used for states not included in dct. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dct (dict): a dictionary from strings to numbers</span>
+<span class="sd">            value_for_omitted (int or float): used for missing states</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span>  <span class="n">dct</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I_to_S</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">value_for_omitted</span><span class="p">)</span>  
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_states</span><span class="p">())</span> <span class="p">]</span>
+            <span class="p">))</span></div>
+    
+<div class="viewcode-block" id="MarkovChain.dict_to_P_column"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.dict_to_P_column">[docs]</a>    <span class="k">def</span> <span class="nf">dict_to_P_column</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dct</span><span class="p">,</span> <span class="n">value_for_omitted</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a row vector of size P (total number of states), whose</span>
+<span class="sd">        values are taken from the dictionary dict from states to</span>
+<span class="sd">        numbers. The value value_for_omitted (which defaults to 0) will be</span>
+<span class="sd">        used for states not included in dct. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dct (dict): a dictionary from strings to numbers</span>
+<span class="sd">            value_for_omitted (int or float): used for missing states</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span> <span class="p">[</span> <span class="n">dct</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I_to_S</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">value_for_omitted</span><span class="p">)</span> <span class="p">]</span> 
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_states</span><span class="p">())</span> <span class="p">]</span>
+            <span class="p">))</span></div>
+<div class="viewcode-block" id="MarkovChain.P_to_dict"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.P_to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">P_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vct</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a dictionary from states to values, built from the </span>
+<span class="sd">        vector vct, according to the internal order of states of P. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vct(list of numbers): a list of values, of size P.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: a dictionary from states to values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">vct</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span> <span class="p">{</span> <span class="bp">self</span><span class="o">.</span><span class="n">I_to_S</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">:</span> <span class="n">val</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="p">})</span></div>
+    
+<div class="viewcode-block" id="MarkovChain.T_to_dict"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.T_to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">T_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vct</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a dictionary from transient states to values, built from the </span>
+<span class="sd">        vector vct, according to the internal order of states of T. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vct(list of numbers): a list of values, of size P.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: a dictionary from states to values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">vct</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">return</span><span class="p">(</span> <span class="p">{</span> <span class="bp">self</span><span class="o">.</span><span class="n">T_to_S</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">:</span> <span class="n">val</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="p">})</span></div>
+    
+<div class="viewcode-block" id="MarkovChain.C_to_dict"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.C_to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">C_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vct</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a dictionary from recurrent states to values, built from the </span>
+<span class="sd">        vector vct, according to the internal order of states of C.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vct(list of numbers): a list of values, of size P.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: a dictionary from states to values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">vct</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">return</span><span class="p">(</span> <span class="p">{</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_to_S</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">:</span> <span class="n">val</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="p">})</span></div>
+
+<div class="viewcode-block" id="MarkovChain.stationary_of_class"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.stationary_of_class">[docs]</a>    <span class="k">def</span> <span class="nf">stationary_of_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a dictionary states in the class of s to corresponding</span>
+<span class="sd">        values of the stationary distribution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            s (str): a state</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: a dictionary from states to floats</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">chapman</span><span class="o">.</span><span class="n">_classes</span><span class="o">.</span><span class="n">_stationary_of_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span></div>
+
+    <span class="c1"># list of recurrent classes as separate chains</span>
+<div class="viewcode-block" id="MarkovChain.recurrent_as_chains"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.recurrent_as_chains">[docs]</a>    <span class="k">def</span> <span class="nf">recurrent_as_chains</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list of MarkovChain objects, each of which contains</span>
+<span class="sd">        a single recurrent class.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            : a list of MarkovChain objects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">chapman</span><span class="o">.</span><span class="n">_classes</span><span class="o">.</span><span class="n">_recurrent_chains</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+
+            
+    
+    <span class="c1"># representation/information</span>
+
+<div class="viewcode-block" id="MarkovChain.info"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Gives basic info about chain (states and transitions only).</span>
+
+<span class="sd">        Returns: </span>
+<span class="sd">            str: returns a formatted string. Looks best when printed (as in print(m.info()))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">chapman</span><span class="o">.</span><span class="n">_representation</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+    
+<div class="viewcode-block" id="MarkovChain.info_classes"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.info_classes">[docs]</a>    <span class="k">def</span> <span class="nf">info_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Gives info about the class structure of the chain.</span>
+
+<span class="sd">        Returns: </span>
+<span class="sd">            str: returns a formatted string. Looks best when printed (as in</span>
+<span class="sd">            print(m.info_classes()))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">chapman</span><span class="o">.</span><span class="n">_representation</span><span class="o">.</span><span class="n">info_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+    
+<div class="viewcode-block" id="MarkovChain.info_stationary"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.info_stationary">[docs]</a>    <span class="k">def</span> <span class="nf">info_stationary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Gives info about the stationary distributions for each</span>
+<span class="sd">        recurrent class.</span>
+
+<span class="sd">        Returns: </span>
+<span class="sd">            str: returns a formatted string. Looks best when printed (as in</span>
+<span class="sd">            print(m.info_stationary()))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">chapman</span><span class="o">.</span><span class="n">_representation</span><span class="o">.</span><span class="n">info_stationary</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+   
+<div class="viewcode-block" id="MarkovChain.info_P"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.info_P">[docs]</a>    <span class="k">def</span> <span class="nf">info_P</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Info about the transition matrix P and the order of states.</span>
+
+<span class="sd">        Returns: </span>
+<span class="sd">            str: returns a formatted string. Looks best when printed (as in</span>
+<span class="sd">            print(m.info_P()))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">chapman</span><span class="o">.</span><span class="n">_representation</span><span class="o">.</span><span class="n">info_P</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+  
+<div class="viewcode-block" id="MarkovChain.info_QRF"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.info_QRF">[docs]</a>    <span class="k">def</span> <span class="nf">info_QRF</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Info about the matrices Q and R, as well as the </span>
+<span class="sd">        fundamental matrix F. </span>
+
+<span class="sd">        Returns: </span>
+<span class="sd">            str: returns a formatted string. Looks best when printed (as in</span>
+<span class="sd">            print(m.info_QRF()))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">chapman</span><span class="o">.</span><span class="n">_representation</span><span class="o">.</span><span class="n">info_QRF</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="MarkovChain.info_all"><a class="viewcode-back" href="../../chapman.html#chapman.base.MarkovChain.info_all">[docs]</a>    <span class="k">def</span> <span class="nf">info_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;All available info about the chain.</span>
+
+<span class="sd">        Returns: </span>
+<span class="sd">            str: returns a formatted string. Looks best when printed (as in</span>
+<span class="sd">            print(m.info_all()))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">infos</span> <span class="o">=</span> <span class="p">[</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">info_classes</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">info_stationary</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">info_P</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">info_QRF</span><span class="p">()</span>
+                <span class="p">]</span>
+        <span class="k">return</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">infos</span><span class="p">))</span></div></div>
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">chapman</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../chapman.html">Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Gordan Zitkovic.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

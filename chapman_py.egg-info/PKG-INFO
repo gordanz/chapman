@@ -1,0 +1,17 @@
+Metadata-Version: 1.2
+Name: chapman-py
+Version: 0.1.0
+Summary: A Markov-chain class
+Home-page: https://github.com/gordanz/chapman
+Author: Gordan Zitkovic
+Author-email: gordanz@math.utexas.edu
+License: UNKNOWN
+Project-URL: Source, https://github.com/gordanz/chapman/
+Description: Chapman
+        =======
+        
+        A Python library for creation, visualization and manipulation of Markov
+        chains.
+        
+Platform: UNKNOWN
+Requires-Python: >=3.5, <4
